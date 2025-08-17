@@ -1,4 +1,593 @@
-<!DOCTYPE html>
+<script>
+        // GitHub repository configuration
+        const GITHUB_USERNAME = 'sujatakar'; // Replace with actual GitHub username
+        const REPO_NAME = 'portfolio'; // Replace with actual repository name
+        const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/docs`;
+
+        // Portfolio categories mapping to folder names
+        const PORTFOLIO_CATEGORIES = {
+            'branding': 'Branding',
+            'elearning': 'E-learning', 
+            'animation': 'Animation',
+            'ai-design': 'AI-Design',
+            'brochure': 'Brochure',
+            'art-decor': 'Art-Decor'
+        };
+
+        // Category descriptions
+        const CATEGORY_DESCRIPTIONS = {
+            'branding': 'Comprehensive brand identity solutions that create lasting impressions and build strong market presence across diverse industries.',
+            'elearning': 'Engaging and interactive e-learning modules designed to enhance corporate training and educational experiences using cutting-edge tools.',
+            'animation': 'Dynamic motion graphics and animations created using Vyond, Adobe Premiere Pro, and other professional tools for engaging visual storytelling.',
+            'ai-design': 'Cutting-edge AI-powered design solutions using Adobe Firefly, Midjourney, and DALL-E for innovative visual content creation.',
+            'brochure': 'Professional brochure designs and print materials that effectively communicate brand messages and engage target audiences.',
+            'art-decor': 'Creative artistic explorations and decorative designs that blend traditional aesthetics with modern digital techniques.'
+        };
+
+        // Portfolio filtering functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        let allPortfolioItems = [];
+        let currentFilter = 'all';
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                const filterValue = button.getAttribute('data-filter');
+                currentFilter = filterValue;
+                filterPortfolioItems(filterValue);
+            });
+        });
+
+        // Function to filter portfolio items
+        function filterPortfolioItems(filterValue) {
+            const portfolioGrid = document.getElementById('portfolio-grid');
+            const items = portfolioGrid.querySelectorAll('.portfolio-item');
+            
+            items.forEach((item, index) => {
+                const category = item.getAttribute('data-category');
+                
+                if (filterValue === 'all' || category === filterValue) {
+                    item.classList.remove('hidden');
+                    item.style.display = 'block';
+                    // Add staggered animation
+                    setTimeout(() => {
+                        item.classList.add('visible');
+                    }, index * 100);
+                } else {
+                    item.classList.add('hidden');
+                    item.classList.remove('visible');
+                    setTimeout(() => {
+                        if (item.classList.contains('hidden')) {
+                            item.style.display = 'none';
+                        }
+                    }, 300);
+                }
+            });
+        }
+
+        // Function to load portfolio items from GitHub
+        async function loadPortfolioFromGitHub() {
+            const portfolioGrid = document.getElementById('portfolio-grid');
+            
+            try {
+                // Show loading state
+                portfolioGrid.innerHTML = `
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading portfolio items from GitHub...</p>
+                    </div>
+                `;
+
+                const allItems = [];
+
+                // Load items from each category folder
+                for (const [category, folderName] of Object.entries(PORTFOLIO_CATEGORIES)) {
+                    try {
+                        const response = await fetch(`${GITHUB_API_BASE}/${folderName}`);
+                        
+                        if (response.ok) {
+                            const files = await response.json();
+                            
+                            // Filter only image and document files
+                            const portfolioFiles = files.filter(file => {
+                                if (file.type !== 'file') return false;
+                                const extension = file.name.toLowerCase().split('.').pop();
+                                return ['jpg', 'jpeg', 'png', 'gif', 'svg', 'pdf', 'md', 'doc', 'docx', 'ppt', 'pptx'].includes(extension);
+                            });
+
+                            // Create portfolio items for each file
+                            for (const file of portfolioFiles) {
+                                const item = await createPortfolioItem(file, category);
+                                allItems.push(item);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Could not load ${folderName} folder:`, error);
+                    }
+                }
+
+                // Display items or empty state
+                if (allItems.length === 0) {
+                    portfolioGrid.innerHTML = createEmptyState();
+                } else {
+                    portfolioGrid.innerHTML = allItems.join('');
+                    allPortfolioItems = document.querySelectorAll('.portfolio-item');
+                    
+                    // Apply current filter
+                    filterPortfolioItems(currentFilter);
+                    
+                    // Initialize animations
+                    setTimeout(() => {
+                        document.querySelectorAll('.portfolio-item').forEach((item, index) => {
+                            setTimeout(() => {
+                                item.classList.add('visible');
+                            }, index * 150);
+                        });
+                    }, 100);
+                }
+
+            } catch (error) {
+                console.error('Error loading portfolio:', error);
+                portfolioGrid.innerHTML = `
+                    <div class="error-state">
+                        <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">⚠️</div>
+                        <h3>Unable to Load Portfolio</h3>
+                        <p>Please check your GitHub repository configuration.</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem; opacity: 0.7;">
+                            Expected repository: ${GITHUB_USERNAME}/${REPO_NAME}/docs/
+                        </p>
+                        <button onclick="loadPortfolioFromGitHub()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-blue); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Retry Loading
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Function to create individual portfolio item
+        async function createPortfolioItem(file, category) {
+            const fileName = file.name;
+            const fileNameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+            const extension = fileName.toLowerCase().split('.').pop();
+            
+            // Determine if it's an image or document
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(extension);
+            const isPDF = extension === 'pdf';
+            const isDocument = ['doc', 'docx', 'ppt', 'pptx', 'md'].includes(extension);
+            
+            // Create display name from filename
+            const displayName = fileNameWithoutExt
+                .replace(/[-_]/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+
+            // Generate tags based on file type
+            let tags = [];
+            if (isImage) {
+                tags = ['Design', 'Visual'];
+            } else if (isPDF) {
+                tags = ['PDF', 'Document'];
+            } else if (isDocument) {
+                tags = ['Document', 'Presentation'];
+            } else {
+                tags = [extension.toUpperCase()];
+            }
+
+            // Add category tag
+            tags.unshift(PORTFOLIO_CATEGORIES[category]);
+
+            return `
+                <div class="portfolio-item" data-category="${category}">
+                    <div class="portfolio-image">
+                        ${isImage ? 
+                            `<img src="${file.download_url}" alt="${displayName}" loading="lazy">
+                             <div class="portfolio-image-overlay">
+                                 <span style="background: rgba(0,0,0,0.8); padding: 0.5rem 1rem; border-radius: 5px;">${displayName}</span>
+                             </div>` : 
+                            `<span>${displayName}</span>`
+                        }
+                    </div>
+                    <div class="portfolio-content">
+                        <h4 class="portfolio-title">${displayName}</h4>
+                        <p class="portfolio-description">
+                            ${getItemDescription(category, fileNameWithoutExt)}
+                        </p>
+                        <div class="portfolio-tags">
+                            ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="portfolio-links">
+                            <a href="${file.html_url}" target="_blank" class="github-link">
+                                <svg class="github-icon" viewBox="0 0 24 24">
+                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                                </svg>
+                                View Source
+                            </a>
+                            ${(isImage || isPDF) ? 
+                                `<a href="${file.download_url}" target="_blank" class="download-link">
+                                    <svg class="download-icon" viewBox="0 0 24 24">
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                    </svg>
+                                    Download
+                                </a>` : ''
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to generate description based on category and filename
+        function getItemDescription(category, filename) {
+            const descriptions = {
+                'branding': `Professional brand identity work showcasing creative solutions and visual communication strategies for modern businesses.`,
+                'elearning': `Interactive e-learning content designed to enhance user engagement and knowledge retention through innovative educational design.`,
+                'animation': `Dynamic motion graphics and animations that bring concepts to life through compelling visual storytelling and professional execution.`,
+                'ai-design': `Innovative AI-powered design solutions leveraging cutting-edge generative tools and creative workflows for next-generation visual content.`,
+                'brochure': `Professional print and digital brochure designs that effectively communicate key messages and brand values with compelling visual hierarchy.`,
+                'art-decor': `Creative artistic explorations combining traditional design principles with modern digital techniques for unique decorative solutions.`
+            };
+            
+            return descriptions[category] || 'Creative design work showcasing professional expertise and innovative solutions across various design disciplines.';
+        }
+
+        // Function to create empty state HTML
+        function createEmptyState() {
+            return `
+                <div class="empty-state">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">📂</div>
+                    <h3>No Portfolio Items Found</h3>
+                    <p>Portfolio items will appear here when files are added to the GitHub repository folders.</p>
+                    <p style="font-size: 0.9rem; margin-top: 1rem; opacity: 0.7;">
+                        Expected structure: <code>docs/Branding/</code>, <code>docs/E-learning/</code>, etc.
+                    </p>
+                    <a href="https://github.com/${GITHUB_USERNAME}/${REPO_NAME}" 
+                       target="_blank" 
+                       style="display: inline-block; margin-top: 1rem; padding: 0.8rem 1.5rem; background: var(--primary-blue); color: white; text-decoration: none; border-radius: 25px; font-weight: 500;">
+                        View Repository
+                    </a>
+                </div>
+            `;
+        }
+
+        // Initialize portfolio on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPortfolioFromGitHub();
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all fade-in elements
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const navHeight = document.querySelector('.navbar').offsetHeight;
+                    const targetPosition = target.offsetTop - navHeight;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 100) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+                navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+            }
+        });
+
+        // Contact form submission
+        document.querySelector('.contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Show loading state
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            // Simulate sending (replace with actual form submission logic)
+            setTimeout(() => {
+                alert('Thank you for your message! I will get back to you soon.');
+                this.reset();
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
+        });
+
+        // Resume download functionality
+        document.getElementById('download-resume').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = 'Preparing... ⏳';
+            this.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                generateAndDownloadResume();
+                
+                // Reset button
+                this.innerHTML = originalText;
+                this.style.pointerEvents = 'auto';
+            }, 1000);
+        });
+
+        function generateAndDownloadResume() {
+            const resumeContent = `SUJATA KAR
+Senior Graphic Design Lead | 11+ Years Experience
+
+📧 sujata.kar39393@gmail.com | 📱 +91 90193 36751
+🏠 22, Michael Madhusudhan Dutta Sarani, East Vivekananda Pally, Doodh More, Siliguri-734006
+🌐 Portfolio: https://tinakar9.wixsite.com/portfolio
+📺 YouTube: https://www.youtube.com/channel/UC4njQ6TeVo5zf_jkpPs7BhQ
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PROFESSIONAL SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+Results-driven Senior Graphic Design Lead with 11+ years of experience creating 
+compelling visual solutions across diverse industries. Expert in traditional design 
+tools and cutting-edge AI-powered design technologies including Adobe Firefly, 
+Midjourney, and DALL-E integration.
+
+CORE COMPETENCIES
+═══════════════════════════════════════════════════════════════════════════════
+• Team Leadership & Management (4-15 team members)
+• Creative Strategy & Concept Development  
+• Brand Identity & Visual Communication
+• AI-Assisted Design Workflows (Adobe Firefly, Midjourney, DALL-E)
+• E-learning Content Creation (Articulate Storyline 360)
+• Motion Graphics & Animation (Vyond, Adobe Premiere Pro)
+• Print & Digital Design Solutions
+• Corporate Communication Design
+
+PROFESSIONAL EXPERIENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+Senior Graphic Design Lead | Infosys BPM | December 2021 - Present
+• Lead a team of 6+ designers in developing innovative visual solutions
+• Implemented AI-powered design workflows reducing project turnaround time by 30%
+• Created interactive e-learning modules using Articulate Storyline 360
+• Increased client satisfaction by 40% through strategic design implementations
+• Developed comprehensive brand guidelines and design systems
+
+Graphic Design Lead | HEPL | August 2021 - December 2021  
+• Led a team of 4 graphic designers from concept to final execution
+• Created e-learning storyboards using Articulate Storyline 360
+• Managed multiple client projects simultaneously
+• Ensured brand consistency across all design deliverables
+
+Associate | PricewaterhouseCoopers SDC | December 2015 - May 2017
+• Managed a team of 8 graphic designers
+• Delivered innovative design layouts and visual solutions
+• Collaborated with international teams on brand communication projects
+• Developed corporate presentation templates and document designs
+
+Senior Graphic Designer | Randstad India | May 2010 - November 2015
+• Led teams of up to 15 resources across multiple projects
+• Worked with premium clients including Envision Marketing and Berger Paints India Ltd
+• Created comprehensive brand identity solutions
+• Developed packaging designs and marketing collaterals
+
+TECHNICAL SKILLS
+═══════════════════════════════════════════════════════════════════════════════
+Design Software (Expert Level):
+• Adobe Creative Suite: Photoshop, Illustrator, InDesign, Premiere Pro
+• AI-Powered Tools: Adobe Firefly, Midjourney, DALL-E
+• E-Learning Platforms: Articulate Storyline 360, Vyond
+• Other Tools: Corel Draw, Microsoft Office Suite
+
+Specializations:
+• Brand Identity Design & Strategy
+• Corporate Communication Design
+• Interactive E-Learning Content
+• Motion Graphics & Animation
+• Print & Packaging Design
+• Digital Marketing Materials
+
+EDUCATION
+═══════════════════════════════════════════════════════════════════════════════
+• Bachelor of Arts (Honours) | S.A. Jaipuria College | 2010
+• Diploma in Graphic & Web Designing | Arena Animation | 2010
+
+KEY ACHIEVEMENTS
+═══════════════════════════════════════════════════════════════════════════════
+• Successfully led design teams ranging from 4 to 15 members
+• Increased team productivity by 30% through AI-driven design processes
+• Developed 50+ comprehensive brand identities across various industries
+• Completed 500+ projects with 95% client satisfaction rate
+• Pioneered AI integration in traditional design workflows
+• Created award-winning packaging designs for major brands
+
+PORTFOLIO HIGHLIGHTS
+═══════════════════════════════════════════════════════════════════════════════
+• Enterprise Brand Identity Development (Infosys BPM)
+• Interactive E-Learning Modules (Corporate Training Programs)
+• AI-Powered Visual Campaigns (Adobe Firefly Integration)
+• Product Packaging Design (Berger Paints India)
+• Corporate Communication Templates (PwC)
+• Motion Graphics Projects (Vyond & Premiere Pro)
+
+LANGUAGES
+═══════════════════════════════════════════════════════════════════════════════
+• English (Fluent)
+• Hindi (Native)
+• Bengali (Native)
+
+ADDITIONAL INFORMATION
+═══════════════════════════════════════════════════════════════════════════════
+• Available for remote and on-site projects
+• Experienced in cross-cultural team management
+• Passionate about emerging design technologies and AI integration
+• Active in design community through YouTube channel and portfolio sharing
+
+═══════════════════════════════════════════════════════════════════════════════
+References available upon request
+═══════════════════════════════════════════════════════════════════════════════`;
+
+            // Create and download the resume as a text file
+            const element = document.createElement('a');
+            const file = new Blob([resumeContent], {type: 'text/plain'});
+            element.href = URL.createObjectURL(file);
+            element.download = 'Sujata_Kar_Resume.txt';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            
+            // Show success message
+            setTimeout(() => {
+                alert('Resume downloaded successfully! 📄');
+            }, 500);
+        }
+
+        // Mobile menu functionality (if needed for future expansion)
+        const mobileMenu = document.querySelector('.mobile-menu');
+        const navMenu = document.querySelector('.nav-menu');
+
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function() {
+                this.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+        }
+
+        // Add loading animation for better UX
+        window.addEventListener('load', function() {
+            document.body.classList.add('loaded');
+        });
+
+        // Enhanced scroll animations
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const navbar = document.querySelector('.navbar');
+            
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                // Scrolling down
+                navbar.style.transform = 'translateY(-100%)';
+            } else {
+                // Scrolling up
+                navbar.style.transform = 'translateY(0)';
+            }
+            
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+
+        // Add parallax effect to hero section
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            const parallax = scrolled * 0.5;
+            
+            if (hero) {
+                hero.style.transform = `translateY(${parallax}px)`;
+            }
+        });
+
+        // Enhanced portfolio item interactions
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.portfolio-item')) {
+                const item = e.target.closest('.portfolio-item');
+                item.style.zIndex = '10';
+                
+                setTimeout(() => {
+                    item.style.zIndex = '1';
+                }, 300);
+            }
+        });
+
+        // Add refresh functionality for portfolio
+        function refreshPortfolio() {
+            const refreshBtn = document.querySelector('.refresh-portfolio');
+            if (refreshBtn) {
+                refreshBtn.textContent = 'Refreshing...';
+                refreshBtn.disabled = true;
+            }
+            
+            loadPortfolioFromGitHub().then(() => {
+                if (refreshBtn) {
+                    refreshBtn.textContent = 'Refresh Portfolio';
+                    refreshBtn.disabled = false;
+                }
+            });
+        }
+
+        // Error handling for network issues
+        window.addEventListener('online', function() {
+            console.log('Connection restored - portfolio data may be outdated');
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('Connection lost - showing cached portfolio data');
+        });
+
+        // Cache management for portfolio items
+        const portfolioCache = {
+            data: null,
+            timestamp: null,
+            isValid: function() {
+                const fiveMinutes = 5 * 60 * 1000;
+                return this.timestamp && (Date.now() - this.timestamp) < fiveMinutes;
+            }
+        };
+
+        // Preload important images for better performance
+        function preloadImages() {
+            const images = [
+                // Add any important image URLs here if needed
+            ];
+            
+            images.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+        }
+
+        // Initialize preloading
+        preloadImages();
+
+        // Debug information
+        console.log(`Portfolio website loaded successfully! 🎨`);
+        console.log(`Repository: ${GITHUB_USERNAME}/${REPO_NAME}`);
+        console.log(`GitHub API Base: ${GITHUB_API_BASE}`);
+        console.log(`Categories:`, PORTFOLIO_CATEGORIES);
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -335,6 +924,7 @@
             margin-top: 3rem;
         }
 
+        /* Portfolio item styles */
         .portfolio-item {
             position: relative;
             border-radius: 20px;
@@ -345,11 +935,16 @@
             background: white;
             opacity: 0;
             transform: translateY(30px);
+            display: block;
         }
 
         .portfolio-item.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        .portfolio-item.hidden {
+            display: none;
         }
 
         .portfolio-item:hover {
@@ -373,6 +968,33 @@
             background-position: center;
         }
 
+        .portfolio-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .portfolio-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .portfolio-item:hover .portfolio-image-overlay {
+            opacity: 1;
+        }
+
         /* Category-specific gradients */
         .portfolio-item[data-category="branding"] .portfolio-image {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -382,12 +1004,20 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
-        .portfolio-item[data-category="corporate"] .portfolio-image {
+        .portfolio-item[data-category="animation"] .portfolio-image {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
 
         .portfolio-item[data-category="ai-design"] .portfolio-image {
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .portfolio-item[data-category="brochure"] .portfolio-image {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .portfolio-item[data-category="art-decor"] .portfolio-image {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
         }
 
         .portfolio-image::before {
@@ -401,32 +1031,76 @@
             opacity: 0.6;
         }
 
-        .portfolio-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-            color: white;
+        .portfolio-content {
             padding: 2rem;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-
-        .portfolio-item:hover .portfolio-overlay {
-            transform: translateY(0);
+            background: white;
         }
 
         .portfolio-title {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-dark);
+            line-height: 1.3;
         }
 
-        .portfolio-category {
-            color: var(--accent-orange);
-            font-size: 0.9rem;
+        .portfolio-description {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .portfolio-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            background: var(--light-gray);
+            color: var(--text-dark);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
             font-weight: 500;
+        }
+
+        .portfolio-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .github-link, .download-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .github-link:hover {
+            color: var(--secondary-purple);
+        }
+
+        .download-link {
+            color: var(--accent-orange);
+        }
+
+        .download-link:hover {
+            color: #ea580c;
+        }
+
+        .github-icon, .download-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
         }
 
         /* Art & Decor Section */
@@ -762,80 +1436,17 @@
                 <button class="filter-btn active" data-filter="all">All Work</button>
                 <button class="filter-btn" data-filter="branding">Branding</button>
                 <button class="filter-btn" data-filter="elearning">E-Learning</button>
-                <button class="filter-btn" data-filter="corporate">Corporate</button>
+                <button class="filter-btn" data-filter="animation">Animation</button>
                 <button class="filter-btn" data-filter="ai-design">AI Design</button>
+                <button class="filter-btn" data-filter="brochure">Brochure</button>
+                <button class="filter-btn" data-filter="art-decor">Art & Decor</button>
             </div>
-            <div class="portfolio-grid">
-                <div class="portfolio-item fade-in" data-category="branding">
-                    <div class="portfolio-image">
-                        <span>Infosys BPM Brand Strategy</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">Enterprise Brand Identity</div>
-                        <div class="portfolio-category">Branding</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="elearning">
-                    <div class="portfolio-image">
-                        <span>Interactive Training Modules</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">Articulate Storyline 360 Content</div>
-                        <div class="portfolio-category">E-Learning</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="corporate">
-                    <div class="portfolio-image">
-                        <span>PwC Document Templates</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">Corporate Communication Design</div>
-                        <div class="portfolio-category">Corporate</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="ai-design">
-                    <div class="portfolio-image">
-                        <span>Adobe Firefly Campaigns</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">AI-Powered Visual Solutions</div>
-                        <div class="portfolio-category">AI Design</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="branding">
-                    <div class="portfolio-image">
-                        <span>Berger Paints Packaging</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">Product Packaging & Brand Communication</div>
-                        <div class="portfolio-category">Branding</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="corporate">
-                    <div class="portfolio-image">
-                        <span>Motion Graphics & Animation</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">Vyond & Premiere Pro Projects</div>
-                        <div class="portfolio-category">Corporate</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="elearning">
-                    <div class="portfolio-image">
-                        <span>HEPL Learning Storyboards</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">Corporate Training Design</div>
-                        <div class="portfolio-category">E-Learning</div>
-                    </div>
-                </div>
-                <div class="portfolio-item fade-in" data-category="ai-design">
-                    <div class="portfolio-image">
-                        <span>Midjourney Integration</span>
-                    </div>
-                    <div class="portfolio-overlay">
-                        <div class="portfolio-title">AI-Enhanced Creative Workflows</div>
-                        <div class="portfolio-category">AI Design</div>
+            <div class="portfolio-container">
+                <!-- Dynamic content will be loaded here -->
+                <div class="portfolio-grid" id="portfolio-grid">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading portfolio items...</p>
                     </div>
                 </div>
             </div>
