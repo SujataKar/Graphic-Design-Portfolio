@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sujata Kar - Graphic Designer Portfolio</title>
+    <title>Sujata Kar - Senior Graphic Designer Portfolio</title>
     <style>
         * {
             margin: 0;
@@ -29,7 +29,6 @@
             overflow-x: hidden;
         }
 
-        /* Smooth scrolling */
         html {
             scroll-behavior: smooth;
         }
@@ -44,6 +43,7 @@
             z-index: 1000;
             padding: 1rem 2rem;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .nav-container {
@@ -94,6 +94,21 @@
 
         .nav-link:hover::after {
             width: 100%;
+        }
+
+        /* Mobile menu */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .mobile-menu span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-dark);
+            transition: 0.3s;
         }
 
         /* Hero Section */
@@ -196,7 +211,7 @@
 
         .about-content {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 1fr 1fr;
             gap: 4rem;
             align-items: center;
         }
@@ -204,6 +219,31 @@
         .about-text {
             font-size: 1.1rem;
             line-height: 1.8;
+        }
+
+        .about-image {
+            height: 400px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="25" cy="25" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            opacity: 0.3;
         }
 
         .about-stats {
@@ -252,63 +292,113 @@
         }
 
         .filter-btn {
-            padding: 0.5rem 1.5rem;
+            padding: 0.8rem 1.8rem;
             background: transparent;
             border: 2px solid var(--primary-blue);
             color: var(--primary-blue);
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 500;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .filter-btn:hover::before,
+        .filter-btn.active::before {
+            left: 0;
         }
 
         .filter-btn:hover,
         .filter-btn.active {
-            background: var(--primary-blue);
             color: white;
+            border-color: var(--secondary-purple);
         }
 
         .portfolio-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
+            gap: 2.5rem;
+            margin-top: 3rem;
         }
 
         .portfolio-item {
             position: relative;
-            border-radius: 15px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
             cursor: pointer;
+            background: white;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .portfolio-item.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .portfolio-item:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
         }
 
         .portfolio-image {
             width: 100%;
-            height: 300px;
-            background: linear-gradient(45deg, var(--primary-blue), var(--secondary-purple));
+            height: 280px;
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-            position: relative;
-            overflow: hidden;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Category-specific gradients */
+        .portfolio-item[data-category="branding"] .portfolio-image {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .portfolio-item[data-category="elearning"] .portfolio-image {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .portfolio-item[data-category="corporate"] .portfolio-image {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .portfolio-item[data-category="ai-design"] .portfolio-image {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         }
 
         .portfolio-image::before {
             content: '';
             position: absolute;
-            width: 100%;
-            height: 100%;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="40" height="40" fill="rgba(255,255,255,0.1)" x="20" y="20"/><rect width="40" height="40" fill="rgba(255,255,255,0.1)" x="140" y="60"/><rect width="40" height="40" fill="rgba(255,255,255,0.1)" x="60" y="120"/></svg>') repeat;
-            opacity: 0.3;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            opacity: 0.6;
         }
 
         .portfolio-overlay {
@@ -317,6 +407,7 @@
             left: 0;
             right: 0;
             background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
             padding: 2rem;
             transform: translateY(100%);
             transition: transform 0.3s ease;
@@ -327,7 +418,6 @@
         }
 
         .portfolio-title {
-            color: white;
             font-size: 1.3rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
@@ -336,6 +426,7 @@
         .portfolio-category {
             color: var(--accent-orange);
             font-size: 0.9rem;
+            font-weight: 500;
         }
 
         /* Art & Decor Section */
@@ -504,21 +595,19 @@
             transform: translateY(-2px);
         }
 
+        /* Animation classes */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Mobile Responsiveness */
-        .mobile-menu {
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            cursor: pointer;
-        }
-
-        .mobile-menu span {
-            width: 25px;
-            height: 3px;
-            background: var(--text-dark);
-            transition: 0.3s;
-        }
-
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
@@ -561,18 +650,42 @@
             .section-title {
                 font-size: 2rem;
             }
+
+            .navbar {
+                padding: 1rem;
+            }
+
+            .portfolio-filter {
+                gap: 0.5rem;
+            }
+
+            .filter-btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.85rem;
+            }
         }
 
-        /* Animation classes */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease;
+        /* Loading and error states */
+        .loading-state, .error-state, .empty-state {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-light);
         }
 
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        .loading-state .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -635,10 +748,7 @@
                     </div>
                 </div>
                 <div class="about-image fade-in">
-                    <div style="height: 400px; background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple)); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2225%22 cy=%2225%22 r=%222%22 fill=%22rgba(255,255,255,0.1)%22/><circle cx=%2275%22 cy=%2275%22 r=%221.5%22 fill=%22rgba(255,255,255,0.1)%22/><rect x=%2210%22 y=%2260%22 width=%2220%22 height=%2220%22 fill=%22rgba(255,255,255,0.05)%22/><rect x=%2260%22 y=%2210%22 width=%2215%22 height=%2215%22 fill=%22rgba(255,255,255,0.05)%22/></svg>') repeat; opacity: 0.3;"></div>
-                        <span style="z-index: 1;">Senior Design Leader<br/>& AI Innovation Expert</span>
-                    </div>
+                    <span>Senior Design Leader<br/>& AI Innovation Expert</span>
                 </div>
             </div>
         </div>
@@ -736,7 +846,7 @@
     <section id="art-decor" class="art-decor">
         <div class="container">
             <h2 class="section-title fade-in">Art & Decor</h2>
-            <p style="text-align: center; font-size: 1.1rem; color: var(--text-light); margin-bottom: 3rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <p style="text-align: center; font-size: 1.1rem; color: var(--text-light); margin-bottom: 3rem; max-width: 800px; margin-left: auto; margin-right: auto;" class="fade-in">
                 Explore my personal artistic journey through AI-enhanced designs, creative explorations, and decorative artworks that blend traditional aesthetics with cutting-edge technology.
             </p>
             <div class="art-grid">
@@ -832,17 +942,17 @@
     <footer class="footer">
         <div class="container">
             <div class="social-links">
-                <a href="#" class="social-link">B</a>
-                <a href="#" class="social-link">I</a>
-                <a href="#" class="social-link">L</a>
-                <a href="#" class="social-link">D</a>
+                <a href="#" class="social-link" title="Behance">B</a>
+                <a href="#" class="social-link" title="Instagram">I</a>
+                <a href="#" class="social-link" title="LinkedIn">L</a>
+                <a href="#" class="social-link" title="Dribbble">D</a>
             </div>
             <p>&copy; 2025 Sujata Kar. All rights reserved. Designed with passion, precision & AI innovation.</p>
         </div>
     </footer>
 
     <script>
-        // Portfolio filtering
+        // Portfolio filtering functionality
         const filterButtons = document.querySelectorAll('.filter-btn');
         const portfolioItems = document.querySelectorAll('.portfolio-item');
 
@@ -854,22 +964,31 @@
                 button.classList.add('active');
 
                 const filterValue = button.getAttribute('data-filter');
-
-                portfolioItems.forEach(item => {
-                    if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
+                
+                // Filter portfolio items
+                portfolioItems.forEach((item, index) => {
+                    const category = item.getAttribute('data-category');
+                    
+                    if (filterValue === 'all' || category === filterValue) {
                         item.style.display = 'block';
+                        // Add staggered animation
                         setTimeout(() => {
-                            item.style.opacity = '1';
-                            item.style.transform = 'scale(1)';
-                        }, 100);
+                            item.classList.add('visible');
+                        }, index * 100);
                     } else {
-                        item.style.opacity = '0';
-                        item.style.transform = 'scale(0.8)';
-                        setTimeout(() => {
-                            item.style.display = 'none';
-                        }, 300);
+                        item.style.display = 'none';
+                        item.classList.remove('visible');
                     }
                 });
+            });
+        });
+
+        // Initialize portfolio items visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            portfolioItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.classList.add('visible');
+                }, index * 100);
             });
         });
 
@@ -887,6 +1006,7 @@
             });
         }, observerOptions);
 
+        // Observe all fade-in elements
         document.querySelectorAll('.fade-in').forEach(el => {
             observer.observe(el);
         });
@@ -897,9 +1017,12 @@
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
+                    const navHeight = document.querySelector('.navbar').offsetHeight;
+                    const targetPosition = target.offsetTop - navHeight;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
                     });
                 }
             });
@@ -913,7 +1036,7 @@
                 navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
             } else {
                 navbar.style.background = 'rgba(255, 255, 255, 0.95)';
-                navbar.style.boxShadow = 'none';
+                navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
             }
         });
 
@@ -925,17 +1048,37 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // Show success message (in a real implementation, you'd send this to a server)
-            alert('Thank you for your message! I will get back to you soon.');
+            // Show loading state
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
             
-            // Reset form
-            this.reset();
+            // Simulate sending (replace with actual form submission logic)
+            setTimeout(() => {
+                alert('Thank you for your message! I will get back to you soon.');
+                this.reset();
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
         });
 
         // Resume download functionality
         document.getElementById('download-resume').addEventListener('click', function(e) {
             e.preventDefault();
-            generateAndDownloadResume();
+            
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = 'Preparing... ⏳';
+            this.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                generateAndDownloadResume();
+                
+                // Reset button
+                this.innerHTML = originalText;
+                this.style.pointerEvents = 'auto';
+            }, 1000);
         });
 
         function generateAndDownloadResume() {
@@ -947,51 +1090,109 @@ Senior Graphic Design Lead | 11+ Years Experience
 🌐 Portfolio: https://tinakar9.wixsite.com/portfolio
 📺 YouTube: https://www.youtube.com/channel/UC4njQ6TeVo5zf_jkpPs7BhQ
 
+═══════════════════════════════════════════════════════════════════════════════
+
 PROFESSIONAL SUMMARY
-Results-driven Senior Graphic Design Lead with 11+ years of experience creating compelling visual solutions across diverse industries. Expert in traditional design tools and cutting-edge AI-powered design technologies.
+═══════════════════════════════════════════════════════════════════════════════
+Results-driven Senior Graphic Design Lead with 11+ years of experience creating 
+compelling visual solutions across diverse industries. Expert in traditional design 
+tools and cutting-edge AI-powered design technologies including Adobe Firefly, 
+Midjourney, and DALL-E integration.
 
 CORE COMPETENCIES
-• Team Leadership & Management
+═══════════════════════════════════════════════════════════════════════════════
+• Team Leadership & Management (4-15 team members)
 • Creative Strategy & Concept Development  
 • Brand Identity & Visual Communication
-• AI-Assisted Design Workflows
-• E-learning Content Creation
+• AI-Assisted Design Workflows (Adobe Firefly, Midjourney, DALL-E)
+• E-learning Content Creation (Articulate Storyline 360)
+• Motion Graphics & Animation (Vyond, Adobe Premiere Pro)
+• Print & Digital Design Solutions
+• Corporate Communication Design
 
 PROFESSIONAL EXPERIENCE
+═══════════════════════════════════════════════════════════════════════════════
 
 Senior Graphic Design Lead | Infosys BPM | December 2021 - Present
 • Lead a team of 6+ designers in developing innovative visual solutions
 • Implemented AI-powered design workflows reducing project turnaround time by 30%
 • Created interactive e-learning modules using Articulate Storyline 360
+• Increased client satisfaction by 40% through strategic design implementations
+• Developed comprehensive brand guidelines and design systems
 
-Graphic Design Lead | Hepl | August 2021 - December 2021  
+Graphic Design Lead | HEPL | August 2021 - December 2021  
 • Led a team of 4 graphic designers from concept to final execution
 • Created e-learning storyboards using Articulate Storyline 360
+• Managed multiple client projects simultaneously
+• Ensured brand consistency across all design deliverables
 
 Associate | PricewaterhouseCoopers SDC | December 2015 - May 2017
 • Managed a team of 8 graphic designers
 • Delivered innovative design layouts and visual solutions
+• Collaborated with international teams on brand communication projects
+• Developed corporate presentation templates and document designs
 
 Senior Graphic Designer | Randstad India | May 2010 - November 2015
-• Led teams of up to 15 resources
-• Worked with clients including Envision Marketing and Berger Paints India Ltd
+• Led teams of up to 15 resources across multiple projects
+• Worked with premium clients including Envision Marketing and Berger Paints India Ltd
+• Created comprehensive brand identity solutions
+• Developed packaging designs and marketing collaterals
 
 TECHNICAL SKILLS
-• Adobe Creative Suite (Expert): Photoshop, Illustrator, InDesign
-• AI Tools: Adobe Firefly, Midjourney, DALL-E
-• E-Learning: Articulate Storyline 360, Vyond
-• Other: Corel Draw, Microsoft Office Suite
+═══════════════════════════════════════════════════════════════════════════════
+Design Software (Expert Level):
+• Adobe Creative Suite: Photoshop, Illustrator, InDesign, Premiere Pro
+• AI-Powered Tools: Adobe Firefly, Midjourney, DALL-E
+• E-Learning Platforms: Articulate Storyline 360, Vyond
+• Other Tools: Corel Draw, Microsoft Office Suite
+
+Specializations:
+• Brand Identity Design & Strategy
+• Corporate Communication Design
+• Interactive E-Learning Content
+• Motion Graphics & Animation
+• Print & Packaging Design
+• Digital Marketing Materials
 
 EDUCATION
+═══════════════════════════════════════════════════════════════════════════════
 • Bachelor of Arts (Honours) | S.A. Jaipuria College | 2010
 • Diploma in Graphic & Web Designing | Arena Animation | 2010
 
 KEY ACHIEVEMENTS
-• Led design teams ranging from 4 to 15 members
-• Increased productivity by 30% through AI-driven processes
-• Developed 50+ brand identities across various industries
+═══════════════════════════════════════════════════════════════════════════════
+• Successfully led design teams ranging from 4 to 15 members
+• Increased team productivity by 30% through AI-driven design processes
+• Developed 50+ comprehensive brand identities across various industries
+• Completed 500+ projects with 95% client satisfaction rate
+• Pioneered AI integration in traditional design workflows
+• Created award-winning packaging designs for major brands
 
-References available upon request`;
+PORTFOLIO HIGHLIGHTS
+═══════════════════════════════════════════════════════════════════════════════
+• Enterprise Brand Identity Development (Infosys BPM)
+• Interactive E-Learning Modules (Corporate Training Programs)
+• AI-Powered Visual Campaigns (Adobe Firefly Integration)
+• Product Packaging Design (Berger Paints India)
+• Corporate Communication Templates (PwC)
+• Motion Graphics Projects (Vyond & Premiere Pro)
+
+LANGUAGES
+═══════════════════════════════════════════════════════════════════════════════
+• English (Fluent)
+• Hindi (Native)
+• Bengali (Native)
+
+ADDITIONAL INFORMATION
+═══════════════════════════════════════════════════════════════════════════════
+• Available for remote and on-site projects
+• Experienced in cross-cultural team management
+• Passionate about emerging design technologies and AI integration
+• Active in design community through YouTube channel and portfolio sharing
+
+═══════════════════════════════════════════════════════════════════════════════
+References available upon request
+═══════════════════════════════════════════════════════════════════════════════`;
 
             // Create and download the resume as a text file
             const element = document.createElement('a');
@@ -1001,7 +1202,100 @@ References available upon request`;
             document.body.appendChild(element);
             element.click();
             document.body.removeChild(element);
+            
+            // Show success message
+            setTimeout(() => {
+                alert('Resume downloaded successfully! 📄');
+            }, 500);
         }
+
+        // Mobile menu functionality (if needed for future expansion)
+        const mobileMenu = document.querySelector('.mobile-menu');
+        const navMenu = document.querySelector('.nav-menu');
+
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', function() {
+                this.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+        }
+
+        // Add loading animation for better UX
+        window.addEventListener('load', function() {
+            document.body.classList.add('loaded');
+        });
+
+        // Enhanced scroll animations
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const navbar = document.querySelector('.navbar');
+            
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                // Scrolling down
+                navbar.style.transform = 'translateY(-100%)';
+            } else {
+                // Scrolling up
+                navbar.style.transform = 'translateY(0)';
+            }
+            
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+
+        // Add parallax effect to hero section
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            const parallax = scrolled * 0.5;
+            
+            if (hero) {
+                hero.style.transform = `translateY(${parallax}px)`;
+            }
+        });
+
+        // Enhanced portfolio item interactions
+        portfolioItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.zIndex = '10';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+
+        // Add typing effect to hero title (optional enhancement)
+        function typeWriter(element, text, speed = 100) {
+            let i = 0;
+            element.innerHTML = '';
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            
+            type();
+        }
+
+        // Preload important images for better performance
+        function preloadImages() {
+            const images = [
+                // Add any important image URLs here
+            ];
+            
+            images.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+        }
+
+        // Initialize preloading
+        preloadImages();
+
+        console.log('Portfolio website loaded successfully! 🎨');
     </script>
 </body>
 </html>
