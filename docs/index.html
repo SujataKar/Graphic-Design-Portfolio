@@ -87,7 +87,7 @@
                 // Load items from each category folder
                 for (const [category, folderName] of Object.entries(PORTFOLIO_CATEGORIES)) {
                     try {
-                        const response = await fetch(`${GITHUB_API_BASE}/${folderName}`);
+                        const response = await fetch(`${GITHUB_API_BASE}/${folderName}?ref=SujataKar-patch-1`);
                         
                         if (response.ok) {
                             const files = await response.json();
